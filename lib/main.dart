@@ -1,10 +1,10 @@
 //Latihan 1
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +34,31 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime? _selectedDate;
   final ImagePicker _picker = ImagePicker();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedDate(); // Load tanggal yang disimpan di SharedPreferences
+  }
+
+  // Memuat tanggal yang disimpan di SharedPreferences
+  Future<void> _loadSelectedDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? savedDate = prefs.getString('selectedDate');
+
+    if (savedDate != null) {
+      setState(() {
+        _selectedDate = DateTime.parse(savedDate);
+      });
+    }
+  }
+
+  // Simpan tanggal ke SharedPreferences
+  Future<void> _saveSelectedDate(DateTime date) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedDate', date.toIso8601String());
+  }
+
+  // Memilih gambar dari galeri
   Future<void> _pickImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
@@ -42,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // Memilih tanggal
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -49,10 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() {
         _selectedDate = picked;
       });
+      _saveSelectedDate(picked); // Simpan tanggal yang dipilih
     }
   }
 
@@ -101,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _selectedDate == null
                   ? 'No date selected'
-                  : 'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}', // Format tanggal
+                  : 'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
             ),
           ],
         ),
@@ -109,6 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
 
 
 //Latihan 2
