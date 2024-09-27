@@ -1,10 +1,11 @@
 //Latihan 1
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,37 +38,68 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _loadSelectedDate(); // Load tanggal yang disimpan di SharedPreferences
+    _loadData();
   }
 
-  // Memuat tanggal yang disimpan di SharedPreferences
-  Future<void> _loadSelectedDate() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? savedDate = prefs.getString('selectedDate');
+  // Memuat data yang disimpan dari SharedPreferences
+  Future<void> _loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
+    // Memuat tanggal
+    String? savedDate = prefs.getString('selectedDate');
     if (savedDate != null) {
       setState(() {
         _selectedDate = DateTime.parse(savedDate);
       });
     }
+
+    // Memuat gambar
+    String? imagePath = prefs.getString('imagePath');
+    if (imagePath != null) {
+      setState(() {
+        _image = XFile(imagePath);
+      });
+    }
+
+    // Memuat nilai SpinBox
+    double? savedScore = prefs.getDouble('score');
+    if (savedScore != null) {
+      setState(() {
+        _score = savedScore;
+      });
+    }
   }
 
-  // Simpan tanggal ke SharedPreferences
-  Future<void> _saveSelectedDate(DateTime date) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedDate', date.toIso8601String());
+  // Menyimpan data ke SharedPreferences
+  Future<void> _saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Menyimpan tanggal
+    if (_selectedDate != null) {
+      await prefs.setString('selectedDate', _selectedDate!.toIso8601String());
+    }
+
+    // Menyimpan gambar
+    if (_image != null) {
+      await prefs.setString('imagePath', _image!.path);
+    }
+
+    // Menyimpan nilai SpinBox
+    await prefs.setDouble('score', _score);
   }
 
-  // Memilih gambar dari galeri
   Future<void> _pickImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _image = pickedFile;
-    });
+    if (pickedFile != null) {
+      setState(() {
+        _image = pickedFile;
+      });
+      // Simpan gambar setelah dipilih
+      _saveData();
+    }
   }
 
-  // Memilih tanggal
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -75,11 +107,12 @@ class _MyHomePageState extends State<MyHomePage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null) {
+    if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
       });
-      _saveSelectedDate(picked); // Simpan tanggal yang dipilih
+      // Simpan tanggal setelah dipilih
+      _saveData();
     }
   }
 
@@ -117,6 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 setState(() {
                   _score = value;
                 });
+                // Simpan nilai SpinBox setelah diubah
+                _saveData();
               },
             ),
             const SizedBox(height: 20),
@@ -128,7 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _selectedDate == null
                   ? 'No date selected'
-                  : 'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+                  : 'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}', // Format tanggal
             ),
           ],
         ),
@@ -139,14 +174,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
+
 //Latihan 2
 // import 'dart:io';
 
 // import 'package:flutter/material.dart';
 // import 'package:flutter_spinbox/flutter_spinbox.dart';
 // import 'package:image_picker/image_picker.dart';
-// import 'package:intl/intl.dart'; // Import untuk format tanggal
-// import 'package:provider/provider.dart'; // Import provider
+// import 'package:intl/intl.dart';
+// import 'package:provider/provider.dart';
 
 // import 'app_state.dart'; // Import file untuk state management
 
@@ -246,3 +282,4 @@ class _MyHomePageState extends State<MyHomePage> {
 //     );
 //   }
 // }
+
